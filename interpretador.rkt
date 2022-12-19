@@ -10,22 +10,13 @@
 
 ; Gramatica
 
-;Valores denotados: referencia (valores expresado)
-;Valores expresado: enteros, flotantes, hexadecimales, cadenas de caracteres, booleanos, procedimientos, listas, registros, tuplas, objetos,
+;Valores denotados: Ref(Valores expresados)
+;Valores expresados: enteros, flotantes, hexadecimales, cadenas de caracteres, booleanos, procedimientos, listas, registros, tuplas, objetos,
 
 ;; Definición BNF para las expresiones del lenguaje
 
 ;;  <programa>       ::= <expresion>
 ;;                      <un-program (exp)>
-
-
-
-
-
-
-
-
-
 
 ;;  <expresion>      ::= <numero>
 ;;                      <numero-lit (num)>
@@ -34,6 +25,7 @@
 ;;                   ::=<booleano>
 ;;                       <verdadero/falso> ---------------
 ;;                   ::= <identificador>
+;;                       <identifier-exp (id)>
 ;;                   ::= var {<identificador>=<expresion>
 ;;                       } ∗ ( , ) in <expresion>
 ;;                   ::= const {<identificador> = <expresion>
@@ -42,10 +34,18 @@
 ;;                       ( { <identificador> } ∗ ( , ) ) = <expresion>
 ;;                       }∗ i n <expresion>
 ;;                   ::= <lista>
+;;                       <lista-exp (list)>
+;;                   ::= crear-lista (<expresion>,<lista>|<expresion>,<crear-lista>)
 ;;                   ::= <tupla>
+;;                       <tupla-exp (tupla)>
+;;                   ::= crear-tupla (<expresion>,<tupla>|<expresion>,<crear-tupla>)
 ;;                   ::= <registro>
+;;                       <register-exp (registro)>
+;;                   ::= crear-registro {<identificador> = <expresion> , <expresion>}
+;;                       <create-registro (id exp registro)>
 ;;                   ::= <expr-bool>
-
+;;                   ::= x16({<numero>}*)
+;;                      <numerohex-lit (lsnum)>
 
 ;;                   ::= (<expresion> <primitiva-binaria> <expresion>)
 ;;                      <primapp-bin-exp (exp1 prim-binaria exp2)>
@@ -62,14 +62,19 @@
 ;;                   ::= "declarar-recursivo" (<identificador> (<identificador> ",")* "=" <expresion> ) en {<expresion>}
 ;;                        <letrec-exp(ids1 ids2 exp1 exp2 )>
 ;;                   ::= begin {<expresion>}+(;) end
+;;                   ::= set <identificador> = <expresion>
 ;;                   ::= if <expr-bool> then <expresion> [else <expresion>] end
 ;;                   ::= while <expr-bool> do <expresion> done
 ;;                   ::= for <identificador> = <expresion> (to | downto) <expresion> do <expresion> done
 
 ;;  <identificador>::=<letter>|{<letter>|0 , . . . , 9|}∗
 ;;  <lista> ::= [{<expresion>} ∗ ( ; ) ]
+;;          ::= vacio
+;;              <lista-vacia>
 ;;  <tupla> ::= tupla [{<expresion>} ∗ ( ; ) ]
-;;  <registro> ::= { {< identificador> = <expresion> }+ (; ) }
+;;          ::= vacio
+;;              <tupla-vacia>
+;;  <registro> ::= { {< identificador> = <expresion> }+ (;) }
 ;;  <expr-bool>
 ;;       ::= <pred-prim>(<expresion> , <expresion>)
 ;;       ::= <oper-bin-bool >(<expr-bool >, <expr-bool >)
@@ -85,21 +90,40 @@
 ;;                      ::= == (primitiva-igual-que)
 ;;                      ::= <> (primitiva-diferente) -------------
 
-;;  <primitiva- aritmeticas-para-hexadecimales>
-;;                      ::=  + (primitiva-suma)
-;;                      ::=  ~ (primitiva-resta)
-;;                      ::=  * (primitiva-multi)
+;;  <primitiva-aritmeticas-para-hexadecimales>
+;;                      ::=  +h (primitiva-suma)
+;;                      ::=  -h (primitiva-resta)
+;;                      ::=  *h (primitiva-multi)
 
 ;;  <primitiva-binaria> ::=  + (primitiva-suma)
-;;                      ::=  ~ (primitiva-resta)
+;;                      ::=  - (primitiva-resta)
 ;;                      ::=  / (primitiva-div)
 ;;                      ::=  * (primitiva-multi)
 ;;                      ::=  % (primitiva-modulo)
 ;;                      ::=  concat (primitiva-concat)
+;;                      ::=  append (primitiva-append)
 
 ;;  <primitiva-unaria>  ::=  longitud (primitiva-longitud)
 ;;                      ::=  add1 (primitiva-add1)
 ;;                      ::=  sub1 (primitiva-sub1)
+;;                      ::=  vacio? (primitiva-vacio?)
+;;                      ::=  lista? (primitiva-lista?)
+;;                      ::=  tupla? (primitiva-tupla?)
+;;                      ::=  cabeza (primitiva-cabeza)
+;;                      ::=  cola   (primitiva-cola)
+;;                      ::=  registros? (primitiva-registro)
+
+;;  <primitiva-listas>
+;;                      ::= ref-list (<lista>,<numero>) = <expresion>
+;;                      ::= set-list (<lista>,<numero>,<expresion>)
+
+;;  <primitiva-tuplas>
+;;                      ::= ref-tuple (<tupla>,<numero>) = <expresion>
+
+;;  <primitiva-registros>
+;;                      ::= ref-registro(<identificador>,<registro>)
+;;                      ::= set-reg ( <registro> , <numero> , <expresion>)
+
 
 ;******************************************************************************************
 
