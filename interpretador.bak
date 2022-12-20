@@ -4,83 +4,177 @@
 ;Andres Felipe Velasco - 1941375
 ;Juan Sebastian Roncancio - 1943003
 ;Adolfo Leon Maya - 2025159
-;https://github.com/andrew921as/Taller3FLP.git
+;https://github.com/Garffieldd/Proyecto-final-flp.git
 
+;MINI_PY
 
 ; Gramatica
 
-;Valores denotados: Texto + Número + Booleano + ProcVal
-;Valores expresado: Texto + Número + Booleano + ProcVal
+;Valores denotados: Ref(Valores expresados)
+;Valores expresados: enteros, flotantes, hexadecimales, cadenas de caracteres, booleanos, procedimientos, listas, registros, tuplas, objetos,
 
 ;; Definición BNF para las expresiones del lenguaje
 
-;;  <programa>       ::= <expresion>
-;;                      <un-program (exp)>
+;;  <programa>       ::= {<declaracion-clase>}*<expresion>
+;;                      a-program (declaracion-clases body)
+
 ;;  <expresion>      ::= <numero>
 ;;                      <numero-lit (num)>
-;;                   ::= "\""<texto> "\""
+;;                   ::= "\""<texto>"\""
 ;;                      <texto-lit (txt)>
+;;                   ::=<booleano>
+;;                       <verdadero/falso> ---------------
 ;;                   ::= <identificador>
-;;                      <var-exp (id)>
+;;                       <identifier-exp (id)>
+;;                   ::= var {<identificador>=<expresion>
+;;                       } ∗ ( , ) in <expresion>
+;;                   ::= const {<identificador> = <expresion>
+;;                       } ∗ ( , ) in <expresion>
+;;                   ::= rec {<identificador>
+;;                       ( { <identificador> } ∗ ( , ) ) = <expresion>
+;;                       }∗ i n <expresion>
+;;                   ::= <lista>
+;;                       <lista-exp (list)>
+;;                   ::= crear-lista (<expresion>,<lista>|<expresion>,<crear-lista>)
+;;                   ::= <tupla>
+;;                       <tupla-exp (tupla)>
+;;                   ::= crear-tupla (<expresion>,<tupla>|<expresion>,<crear-tupla>)
+;;                   ::= <registro>
+;;                       <register-exp (registro)>
+;;                   ::= crear-registro {<identificador> = <expresion> , <expresion>}
+;;                       <create-registro (id exp registro)>
+;;                   ::= <expr-bool>
+;;                   ::= x16({<numero>}*)
+;;                      <numerohex-lit (lsnum)>
+
 ;;                   ::= (<expresion> <primitiva-binaria> <expresion>)
 ;;                      <primapp-bin-exp (exp1 prim-binaria exp2)>
 ;;                   ::= <primitiva-unaria> (<expresion>)
 ;;                      <primapp-un-exp (prim-unaria exp)>
-;;                   ::= Si <expresion> entonces <expresion>  sino <expresion> finSI
+;;                   ::= Si <expr-bool> entonces <expresion>  [sino <expresion>] finSI
 ;;                      <condicional-exp (test-exp true-exp false-exp)>
 ;;                   ::= declarar (<identificador> = <expresion> (;)) { <expresion> }
 ;;                      <variableLocal-exp (ids exps cuerpo)>
 ;;                   ::= procedimiento (<identificador>*',') haga <expresion> finProc
-;;                      <procedimiento-ex (ids cuero)>
+;;                      <procedimiento-ex (ids cuerpo)>
 ;;                   ::=  "evaluar" expresion   (expresion ",")*  finEval
-;;                      <app-exp(exp exps)> 
+;;                      <app-exp(exp exps)>
+;;                   ::= "declarar-recursivo" (<identificador> (<identificador> ",")* "=" <expresion> ) en {<expresion>}
+;;                        <letrec-exp(ids1 ids2 exp1 exp2 )>
+;;                   ::= iniciar {<expresion>}+(;) fin
+;;                   ::= cambiar <identificador> = <expresion>
+;;                   ::= mientras <expr-bool> entonces <expresion> fin
+;;                   ::= para <identificador> = <expresion> (hasta | antesde) <expresion> entonces <expresion> fin
+;;                   ::= nuevo <identificador> ({<expresion>}","*)
+;;                   ::= invocar <expresion> <identificador> ({<expresion>}","*)
+;;                   ::= super <identificador> ({expresion>}","*)
+
+
+;;  <identificador>::=<letter>|{<letter>|0 , . . . , 9|}∗
+;;  <lista> ::= [{<expresion>} ∗ ( ; ) ]
+;;          ::= vacio
+;;              <lista-vacia>
+;;  <tupla> ::= tupla [{<expresion>} ∗ ( ; ) ]
+;;          ::= vacio
+;;              <tupla-vacia>
+;;  <registro> ::= { {< identificador> = <expresion> }+ (;) }
+;;  <expr-bool>
+;;       ::= <pred-prim>(<expresion> , <expresion>)
+;;       ::= <oper-bin-bool >(<expr-bool >, <expr-bool >)
+;;       ::= <bool>
+;;       ::= <oper-un-bool >(<expr-bool >)
+;;  <pred-prim> ::= < | > | <= | >= | == | <>
+;;  <oper-bin-bool> ::= and|or
+;;  <oper-un-bool> ::= not
+;;  <pred-prim>         ::= < (primitiva-menor-que)
+;;                      ::= > (primitiva-mayor-que)
+;;                      ::= <= (primitiva-menor-o-igual-que)
+;;                      ::= >= (primitiva-mayor-o-igual-que)
+;;                      ::= == (primitiva-igual-que)
+;;                      ::= <> (primitiva-diferente) -------------
+
+;;  <primitiva-aritmeticas-para-hexadecimales>
+;;                      ::=  +h (primitiva-suma)
+;;                      ::=  -h (primitiva-resta)
+;;                      ::=  *h (primitiva-multi)
+
 ;;  <primitiva-binaria> ::=  + (primitiva-suma)
-;;                      ::=  ~ (primitiva-resta)
+;;                      ::=  - (primitiva-resta)
 ;;                      ::=  / (primitiva-div)
 ;;                      ::=  * (primitiva-multi)
+;;                      ::=  % (primitiva-modulo)
 ;;                      ::=  concat (primitiva-concat)
+;;                      ::=  append (primitiva-append)
+
 ;;  <primitiva-unaria>  ::=  longitud (primitiva-longitud)
 ;;                      ::=  add1 (primitiva-add1)
 ;;                      ::=  sub1 (primitiva-sub1)
+;;                      ::=  vacio? (primitiva-vacio?)
+;;                      ::=  lista? (primitiva-lista?)
+;;                      ::=  tupla? (primitiva-tupla?)
+;;                      ::=  cabeza (primitiva-cabeza)
+;;                      ::=  cola   (primitiva-cola)
+;;                      ::=  registros? (primitiva-registro)
+
+;;  <primitiva-listas>
+;;                      ::= ref-list (<lista>,<numero>) = <expresion>
+;;                      ::= set-list (<lista>,<numero>,<expresion>)
+
+;;  <primitiva-tuplas>
+;;                      ::= ref-tuple (<tupla>,<numero>) = <expresion>
+
+;;  <primitiva-registros>
+;;                      ::= ref-registro(<identificador>,<registro>)
+;;                      ::= set-reg ( <registro> , <numero> , <expresion>)
+
+;; <declaracion-clase>  ::= clase <identificador> extender <identificador>
+;;                          {campo<identificador>}* {<declaracion-metodo>}*
+;; <declaracion-metodo> ::= metodo <identificador> ({<identificador>}* ",")
+;;                          <expresion>
+
 
 ;******************************************************************************************
+
 ;Especificación Léxica
-
 (define scanner-spec-simple-interpreter
-'((white-sp (whitespace) skip)
-  (comment (":)" (arbno (not #\newline))) skip)
-  (identificador ("@" letter (arbno (or letter digit "?"))) symbol)
-  (numero (digit (arbno digit)) number)
-  (numero ("-" digit (arbno digit)) number)
-  (numero (digit (arbno digit) "." digit (arbno digit)) number)
-  (numero ("-" digit (arbno digit) "." digit (arbno digit)) number)
-  (texto ( letter (arbno (or letter digit))) string))
-)
-
+  '((white-sp (whitespace) skip)
+    (comment (":)" (arbno (not #\newline))) skip)
+    (identificador ("@" letter (arbno (or letter digit "?"))) symbol)
+    (numero (digit (arbno digit)) number)
+    (numero ("-" digit (arbno digit)) number)
+    (numero (digit (arbno digit) "." digit (arbno digit)) number)
+    (numero ("-" digit (arbno digit) "." digit (arbno digit)) number)
+    (texto ( (or letter "-") (arbno (or letter digit ":" "-"))) string)
+    (boleano ("verdadero") bool)
+    (boleano ("falso") bool))
+  )
+ 
 ;Especificación Sintáctica (gramática)
 (define grammar-simple-interpreter
   '((programa (expresion) un-programa)
     (expresion (numero) numero-lit)
+    (expresion (boleano) bolean-exp)
     (expresion ("\"" texto "\"") texto-lit)
     (expresion (identificador) var-exp)
-    (expresion
-     ;Recordar: Definición de terminal para primapp-exp
-     ("(" expresion primitiva-binaria expresion ")")
-     primapp-bin-exp)
-   
-    ; características adicionales
     (expresion (primitiva-unaria  "(" expresion ")") primapp-un-exp)
     (expresion ("Si"  expresion  "entonces" expresion "sino" expresion "finSI")
-                condicional-exp)
-    (expresion ("declarar" "("(arbno identificador "=" expresion ";") ")" "{"expresion"}")
-                variableLocal-exp)
+               condicional-exp)
+    (expresion ("declarar" "("(separated-list identificador "=" expresion ";") ")" "{"expresion"}")
+               variableLocal-exp)
     (expresion ("procedimiento" "(" (separated-list identificador ",") ")" "haga" expresion "finProc")
-                procedimiento-ex)
-    (expresion ("evaluar" expresion (arbno expresion ",") "finEval")
-                app-exp)
-    (expresion ("declarar recursivo" (arbno identificador "(" (separated-list identificador ",") ")" "=" expresion)  "en" expresion) 
-                letrec-exp)
-    ;;;;;;
+               procedimiento-ex)
+    (expresion ("evaluar" expresion "("(separated-list expresion ",") ")" "finEval")
+               app-exp)
+    (expresion ("declarar-recursivo" "("(arbno identificador "(" (separated-list identificador ",") ")" "=" expresion) ")" "en" "{"expresion"}") 
+               letrec-exp)
+;; Depronto toca colocar 2 expresiones para que esto funcione
+    (expresion ("iniciar" expresion (separated-list expresion ",") "fin") iniciar-exp)
+    (expresion ("cambiar" identificador "=" expresion) cambiar-exp)
+     ;Recordar: Definición de terminal para primapp-exp
+    (expresion
+     ("(" expresion primitiva-binaria expresion ")")
+     primapp-bin-exp)
+    
     (primitiva-binaria ("+") primitiva-suma)
     (primitiva-binaria ("~") primitiva-resta)
     (primitiva-binaria ("/")primitiva-div)
@@ -116,10 +210,10 @@
 
 (define interpretador
   (sllgen:make-rep-loop  "(͡° ͜ʖ͡°) "
-    (lambda (pgm) (evaluar-programa  pgm)) 
-    (sllgen:make-stream-parser 
-      scanner-spec-simple-interpreter
-      grammar-simple-interpreter)))
+                         (lambda (pgm) (evaluar-programa  pgm)) 
+                         (sllgen:make-stream-parser 
+                          scanner-spec-simple-interpreter
+                          grammar-simple-interpreter)))
 
 ;*******************************************************************************************
 ;El Interprete
@@ -131,7 +225,7 @@
   (lambda (pgm)
     (cases programa pgm
       (un-programa (body)
-                 (evaluar-expresion body (ambiente-inicial))))))
+                   (evaluar-expresion body (ambiente-inicial))))))
 
 ; Ambiente inicial
 ;(define ambiente-inicial
@@ -157,20 +251,26 @@
       (texto-lit (txt) txt)
       (var-exp (id) (buscar-variable env id))
       (primapp-bin-exp (rand1 prim rand2)
-                   (aplicar-primitiva-binaria prim (evaluar-rand rand1 env) (evaluar-rand rand2 env)))
+                       (aplicar-primitiva-binaria prim (evaluar-rand rand1 env) (evaluar-rand rand2 env)))
       (primapp-un-exp (prim rand)
                       (aplicar-primitiva-unaria prim (evaluar-rand rand env))
                       )
       (condicional-exp (test-exp true-exp false-exp)
-              (if (valor-verdad? (evaluar-expresion test-exp env))
-                  (evaluar-expresion true-exp env)
-                  (evaluar-expresion false-exp env)))
+                       (if (valor-verdad? (evaluar-expresion test-exp env))
+                           (evaluar-expresion true-exp env)
+                           (evaluar-expresion false-exp env)))
       (variableLocal-exp (ids rands body)
-               (let ((args (evaluar-rands rands env)))
-                 (evaluar-expresion body
-                                  (extender-ambiente ids args env))))
+                         (let ((args (evaluar-rands rands env)))
+                           (evaluar-expresion body
+                                              (extender-ambiente ids args env))))
       (procedimiento-ex (ids body)
-                (closure ids body env))
+                        (closure ids body env))
+
+ ;         (expresion ("iniciar" expresion (separated-list expresion ",") "fin") iniciar-exp)
+  ;  (expresion ("cambiar" identificador "=" expresion) cambiar-exp)
+      (iniciar-exp (rands)
+                   (let (evaluar-rands rands env))
+                   )
       (app-exp (rator rands)
                (let ((proc (evaluar-expresion rator env))
                      (args (evaluar-rands rands env)))
@@ -180,7 +280,7 @@
                                  "Intento de aplicar el no procedimiento ~s" proc))))
       (letrec-exp (proc-names idss bodies letrec-body)
                   (evaluar-expresion letrec-body
-                                   (extender-ambiente-recursivamente proc-names idss bodies env))))))
+                                     (extender-ambiente-recursivamente proc-names idss bodies env))))))
 
 ; funciones auxiliares para aplicar evaluar-expresion a cada elemento de una 
 ; lista de operandos (expresiones)
@@ -193,7 +293,7 @@
   (lambda (rand env)
     (evaluar-expresion rand env)))
 
-;aplicar-primitiva-binaria: <primitiva> <expresion> <expresion> -> numero
+;aplicar-primitiva-binaria: <expresion> <primitiva> <expresion> -> numero o string dependiendo de la primitiva 
 (define aplicar-primitiva-binaria
   (lambda (prim rand1 rand2)
     (cases primitiva-binaria prim
@@ -217,7 +317,7 @@
     )
   )
 
-;valor-verdad?: determina si un valor dado corresponde a un valor booleano falso o verdadero
+;valor-verdad?: determina si un valor dado corresponde a un valor booleano falso (0) o verdadero (diferente a 0)
 (define valor-verdad?
   (lambda (x)
     (not (zero? x))))
@@ -237,18 +337,64 @@
                (evaluar-expresion body (extender-ambiente ids args env))))))
 
 ;*******************************************************************************************
+;Paso por referencia
+
+(define val-exp?
+  (lambda (x)
+    (or (number? x) (procval? x))))
+
+(define referencia-objetivo-directo?
+  (lambda (x)
+    (and (referencia? x)
+         (cases referencia x
+           (a-ref (pos vec)
+                  (cases objetivo (vector-ref vec pos)
+                    (direct-objetivo (v) #t)
+                    (indirect-objetivo (v) #f)))))))
+
+(define deref
+  (lambda (ref)
+    (cases objetivo (primitive-deref ref)
+      (direct-objetivo (val-exp) val-exp)
+      (indirect-objetivo (ref1)
+                       (cases objetivo (primitive-deref ref1)
+                         (direct-objetivo (val-exp) val-exp)
+                         (indirect-objetivo (p)
+                                          (eopl:error 'deref
+                                                      "Illegal referencia: ~s" ref1)))))))
+
+(define primitive-deref
+  (lambda (ref)
+    (cases referencia ref
+      (a-ref (pos vec)
+             (vector-ref vec pos)))))
+
+(define setref!
+  (lambda (ref val-exp)
+    (let
+        ((ref (cases objetivo (primitive-deref ref)
+                (direct-objetivo (val-exp1) ref)
+                (indirect-objetivo (ref1) ref1))))
+      (primitive-setref! ref (direct-objetivo val-exp)))))
+
+(define primitive-setref!
+  (lambda (ref val)
+    (cases referencia ref
+      (a-ref (pos vec)
+             (vector-set! vec pos val)))))
+;*******************************************************************************************
 ;Ambientes
 
 ;definición del tipo de dato ambiente
 (define-datatype environment environment?
-  (empty-env-record)
+  (vacio)
   (registro-ambiente-extendido (syms (list-of symbol?))
-                       (vals (list-of scheme-value?))
-                       (env environment?))
+                               (vals (list-of scheme-value?))
+                               (env environment?))
   (registro-ambiente-extendido-recursivamente (proc-names (list-of symbol?))
-                                   (idss (list-of (list-of symbol?)))
-                                   (bodies (list-of expresion?))
-                                   (env environment?)))
+                                              (idss (list-of (list-of symbol?)))
+                                              (bodies (list-of expresion?))
+                                              (env environment?)))
 
 (define scheme-value? (lambda (v) #t))
 
@@ -256,7 +402,7 @@
 ;función que crea un ambiente vacío
 (define empty-env  
   (lambda ()
-    (empty-env-record)))       ;llamado al constructor de ambiente vacío 
+    (vacio)))       ;llamado al constructor de ambiente vacío 
 
 
 ;extender-ambiente: <list-of symbols> <list-of numbers> enviroment -> enviroment
@@ -276,20 +422,20 @@
 (define buscar-variable
   (lambda (env sym)
     (cases environment env
-      (empty-env-record ()
-                        (eopl:error 'empty-env "No binding for ~s" sym))
+      (vacio ()
+             (eopl:error 'empty-env "No binding for ~s" sym))
       (registro-ambiente-extendido (syms vals old-env)
-                           (let ((pos (list-find-position sym syms)))
-                             (if (number? pos)
-                                 (list-ref vals pos)
-                                 (buscar-variable old-env sym))))
+                                   (let ((pos (list-find-position sym syms)))
+                                     (if (number? pos)
+                                         (list-ref vals pos)
+                                         (buscar-variable old-env sym))))
       (registro-ambiente-extendido-recursivamente (proc-names idss bodies old-env)
-                                       (let ((pos (list-find-position sym proc-names)))
-                                         (if (number? pos)
-                                             (closure (list-ref idss pos)
-                                                      (list-ref bodies pos)
-                                                      env)
-                                             (buscar-variable old-env sym)))))))
+                                                  (let ((pos (list-find-position sym proc-names)))
+                                                    (if (number? pos)
+                                                        (closure (list-ref idss pos)
+                                                                 (list-ref bodies pos)
+                                                                 env)
+                                                        (buscar-variable old-env sym)))))))
 
 ;****************************************************************************************
 ;Funciones Auxiliares
@@ -308,14 +454,15 @@
       ((pred (car ls)) 0)
       (else (let ((list-index-r (list-index pred (cdr ls))))
               (if (number? list-index-r)
-                (+ list-index-r 1)
-                #f))))))
+                  (+ list-index-r 1)
+                  #f))))))
 
- ;funcion auxiliar que concatena 2 primitivas
+;funcion auxiliar que concatena 2 expresiones (solo texto)
 (define concat
-   (lambda (s1 s2)
-     (if (and (string? s1) (string? s2))
-         (string-append s1  s2)
-         (string-append (number->string s1) (number->string s2)))))
+  (lambda (s1 s2)
+    (if (and (string? s1) (string? s2))
+        (string-append s1  s2)
+        (eopl:error " Solo se pueden concatenar Strings:"))))
 
- 
+
+
