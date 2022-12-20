@@ -15,8 +15,8 @@
 
 ;; Definición BNF para las expresiones del lenguaje
 
-;;  <programa>       ::= <expresion>
-;;                      <un-program (exp)>
+;;  <programa>       ::= {<declaracion-clase>}*<expresion>
+;;                      a-program (declaracion-clases body)
 
 ;;  <expresion>      ::= <numero>
 ;;                      <numero-lit (num)>
@@ -51,7 +51,7 @@
 ;;                      <primapp-bin-exp (exp1 prim-binaria exp2)>
 ;;                   ::= <primitiva-unaria> (<expresion>)
 ;;                      <primapp-un-exp (prim-unaria exp)>
-;;                   ::= Si <expresion> entonces <expresion>  sino <expresion> finSI
+;;                   ::= Si <expr-bool> entonces <expresion>  [sino <expresion>] finSI
 ;;                      <condicional-exp (test-exp true-exp false-exp)>
 ;;                   ::= declarar (<identificador> = <expresion> (;)) { <expresion> }
 ;;                      <variableLocal-exp (ids exps cuerpo)>
@@ -61,11 +61,14 @@
 ;;                      <app-exp(exp exps)>
 ;;                   ::= "declarar-recursivo" (<identificador> (<identificador> ",")* "=" <expresion> ) en {<expresion>}
 ;;                        <letrec-exp(ids1 ids2 exp1 exp2 )>
-;;                   ::= begin {<expresion>}+(;) end
-;;                   ::= set <identificador> = <expresion>
-;;                   ::= if <expr-bool> then <expresion> [else <expresion>] end
-;;                   ::= while <expr-bool> do <expresion> done
-;;                   ::= for <identificador> = <expresion> (to | downto) <expresion> do <expresion> done
+;;                   ::= iniciar {<expresion>}+(;) fin
+;;                   ::= cambiar <identificador> = <expresion>
+;;                   ::= mientras <expr-bool> entonces <expresion> fin
+;;                   ::= para <identificador> = <expresion> (hasta | antesde) <expresion> entonces <expresion> fin
+;;                   ::= nuevo <identificador> ({<expresion>}","*)
+;;                   ::= invocar <expresion> <identificador> ({<expresion>}","*)
+;;                   ::= super <identificador> ({expresion>}","*)
+
 
 ;;  <identificador>::=<letter>|{<letter>|0 , . . . , 9|}∗
 ;;  <lista> ::= [{<expresion>} ∗ ( ; ) ]
@@ -124,6 +127,11 @@
 ;;                      ::= ref-registro(<identificador>,<registro>)
 ;;                      ::= set-reg ( <registro> , <numero> , <expresion>)
 
+;; <declaracion-clase>  ::= clase <identificador> extender <identificador>
+;;                          {campo<identificador>}* {<declaracion-metodo>}*
+;; <declaracion-metodo> ::= metodo <identificador> ({<identificador>}* ",")
+;;                          <expresion>
+
 
 ;******************************************************************************************
 
@@ -136,13 +144,16 @@
     (numero ("-" digit (arbno digit)) number)
     (numero (digit (arbno digit) "." digit (arbno digit)) number)
     (numero ("-" digit (arbno digit) "." digit (arbno digit)) number)
-    (texto ( (or letter "-") (arbno (or letter digit ":" "-"))) string))
+    (texto ( (or letter "-") (arbno (or letter digit ":" "-"))) string)
+    (boleano ("verdadero") bool)
+    (boleano ("falso") bool))
   )
-
+ 
 ;Especificación Sintáctica (gramática)
 (define grammar-simple-interpreter
   '((programa (expresion) un-programa)
     (expresion (numero) numero-lit)
+    (expresion (boleano) bolean-exp)
     (expresion ("\"" texto "\"") texto-lit)
     (expresion (identificador) var-exp)
     (expresion (primitiva-unaria  "(" expresion ")") primapp-un-exp)
@@ -156,8 +167,11 @@
                app-exp)
     (expresion ("declarar-recursivo" "("(arbno identificador "(" (separated-list identificador ",") ")" "=" expresion) ")" "en" "{"expresion"}") 
                letrec-exp)
-    (expresion
+;; Depronto toca colocar 2 expresiones para que esto funcione
+    (expresion ("iniciar" expresion (separated-list expresion ",") "fin") iniciar-exp)
+    (expresion ("cambiar" identificador "=" expresion) cambiar-exp)
      ;Recordar: Definición de terminal para primapp-exp
+    (expresion
      ("(" expresion primitiva-binaria expresion ")")
      primapp-bin-exp)
     
@@ -251,6 +265,12 @@
                                               (extender-ambiente ids args env))))
       (procedimiento-ex (ids body)
                         (closure ids body env))
+
+ ;         (expresion ("iniciar" expresion (separated-list expresion ",") "fin") iniciar-exp)
+  ;  (expresion ("cambiar" identificador "=" expresion) cambiar-exp)
+      (iniciar-exp (rands)
+                   (let (evaluar-rands rands env))
+                   )
       (app-exp (rator rands)
                (let ((proc (evaluar-expresion rator env))
                      (args (evaluar-rands rands env)))
@@ -316,6 +336,52 @@
       (closure (ids body env)
                (evaluar-expresion body (extender-ambiente ids args env))))))
 
+;*******************************************************************************************
+;Paso por referencia
+
+(define val-exp?
+  (lambda (x)
+    (or (number? x) (procval? x))))
+
+(define referencia-objetivo-directo?
+  (lambda (x)
+    (and (referencia? x)
+         (cases referencia x
+           (a-ref (pos vec)
+                  (cases objetivo (vector-ref vec pos)
+                    (direct-objetivo (v) #t)
+                    (indirect-objetivo (v) #f)))))))
+
+(define deref
+  (lambda (ref)
+    (cases objetivo (primitive-deref ref)
+      (direct-objetivo (val-exp) val-exp)
+      (indirect-objetivo (ref1)
+                       (cases objetivo (primitive-deref ref1)
+                         (direct-objetivo (val-exp) val-exp)
+                         (indirect-objetivo (p)
+                                          (eopl:error 'deref
+                                                      "Illegal referencia: ~s" ref1)))))))
+
+(define primitive-deref
+  (lambda (ref)
+    (cases referencia ref
+      (a-ref (pos vec)
+             (vector-ref vec pos)))))
+
+(define setref!
+  (lambda (ref val-exp)
+    (let
+        ((ref (cases objetivo (primitive-deref ref)
+                (direct-objetivo (val-exp1) ref)
+                (indirect-objetivo (ref1) ref1))))
+      (primitive-setref! ref (direct-objetivo val-exp)))))
+
+(define primitive-setref!
+  (lambda (ref val)
+    (cases referencia ref
+      (a-ref (pos vec)
+             (vector-set! vec pos val)))))
 ;*******************************************************************************************
 ;Ambientes
 
